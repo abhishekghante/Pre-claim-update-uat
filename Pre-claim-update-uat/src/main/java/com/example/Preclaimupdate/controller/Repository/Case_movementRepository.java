@@ -15,10 +15,19 @@ public interface Case_movementRepository extends JpaRepository<Case_movement, In
 	@Query(value="select count(*) from case_movement where toId = :username", nativeQuery = true)
 	int getNewCaseCount(@Param("username")String username);
 	
-	@Query(value="select count(*) from case_movement where fromId = :username", nativeQuery = true)
+	@Query(value="select count(*) from case_lists a, ("
+			+ "select a.* from audit_case_movement a, ("
+			+ "select caseId, max(updatedDate) as updatedDate from audit_case_movement "
+			+ "where user_role = 'INV' group by caseId) b "
+			+ "where a.caseId = b.caseId and a.updatedDate = b.updatedDate and a.user_role = 'INV') b "
+			+ "where a.caseId = b.caseId and b.toId = :username", nativeQuery = true)
 	int getCaseSubmittedCount(@Param("username")String username);
 
-	@Query(value="select count(*) from case_movement where toId = :username and caseStatus ='Closed'", 
+	@Query(value="select count(*) from case_lists a, ("
+			+ "select a.* from audit_case_movement a, ("
+			+ "select caseId, max(updatedDate) as updatedDate from audit_case_movement where user_role = 'INV' group by caseId) b "
+			+ "where a.caseId = b.caseId and a.updatedDate = b.updatedDate and a.user_role = 'INV') b "
+			+ "where a.caseId = b.caseId and a.caseStatus = 'Closed' and b.toId = :username", 
 			nativeQuery = true)
 	int getCaseClosedCount(@Param("username")String username);
 	
